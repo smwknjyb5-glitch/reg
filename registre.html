@@ -1,0 +1,138 @@
+ <!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سجل الحضور</title>
+ <meta property="og:image" content="https://smwknjyb5-glitch.github.io/re/reg.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="صورة تطبيق  للسجل">
+<style>
+:root{--bg:#f6f4ee;--card:#fff;--tx:#1d2733;--mut:#667085;--ac:#0f766e;--ac2:#b45309;--bd:#d9d4c7;--hd:#e7f3f1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161d;--card:#18212b;--tx:#e8edf2;--mut:#95a3b3;--ac:#2dd4bf;--ac2:#f5b042;--bd:#2d3a48;--hd:#1c3330}}
+:root[data-theme="dark"]{--bg:#10161d;--card:#18212b;--tx:#e8edf2;--mut:#95a3b3;--ac:#2dd4bf;--ac2:#f5b042;--bd:#2d3a48;--hd:#1c3330}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",Arial,sans-serif;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding:14px}
+h1{font-size:1.4rem;margin:6px 0 12px;color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+.card h2{font-size:1rem;margin:0 0 8px;color:var(--ac2)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+label{font-size:.9rem;color:var(--mut)}
+input,button{font:inherit;color:var(--tx)}
+input[type=text],input[type=date],input[type=number]{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;min-width:0}
+.chip{border:1px solid var(--bd);background:var(--bg);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:.9rem}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.btn.red{background:#b42318}
+.tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{border:1px solid var(--bd);padding:0;text-align:center}
+th{background:var(--hd);padding:8px 6px;font-size:.95rem;white-space:nowrap}
+td.n{width:44px;color:var(--mut);padding:4px}
+td input{width:100%;border:0;background:transparent;padding:8px 6px;text-align:center;box-sizing:border-box;min-width:70px}
+td input:focus{outline:2px solid var(--ac);outline-offset:-2px}
+td button.att{width:100%;border:0;background:transparent;padding:8px;font-size:1.1rem;cursor:pointer;min-width:60px}
+.x{border:0;background:transparent;color:#b42318;cursor:pointer;font-size:1rem}
+.ph{display:none;text-align:center;margin-bottom:8px}
+@media print{
+ body{background:#fff;color:#000}.noprint{display:none!important}.ph{display:block}
+ .tw{border:0;overflow:visible}th,td{border-color:#000!important;color:#000}th{background:#eee!important}
+ td input{color:#000}.x{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1 class="noprint">سجل الحضور</h1>
+
+<div class="card noprint">
+ <h2>معلومات السجل</h2>
+ <div class="row">
+  <input type="text" id="ttl" placeholder="عنوان السجل (مثال: القسم 4م1)" style="flex:1 1 200px">
+  <input type="date" id="dt"><button class="btn alt" id="td" type="button">اليوم</button>
+  <label>عدد الأسطر <input type="number" id="cnt" min="1" max="200" value="30" style="width:70px"></label>
+ </div>
+</div>
+
+<div class="card noprint">
+ <h2>الأعمدة الإضافية (اختر ما تشاء)</h2>
+ <div class="row" id="presets"></div>
+ <div class="row" style="margin-top:10px">
+  <input type="text" id="cn" placeholder="عمود مخصص..." style="flex:1 1 160px">
+  <button class="btn" id="addc">إضافة عمود</button>
+ </div>
+</div>
+
+<div class="ph"><h2 id="pt" style="margin:0"></h2><div id="pd"></div></div>
+<div class="tw"><table id="tb"></table></div>
+
+<div class="row noprint" style="margin-top:12px">
+ <button class="btn" id="addr">+ سطر</button>
+ <button class="btn alt" id="clr">مسح البيانات</button>
+ <button class="btn" id="sv">💾 حفظ</button>
+ <button class="btn" id="prt">طباعة</button>
+ <span id="msg" class="noprint" style="color:var(--ac);font-size:.9rem"></span>
+</div>
+</div>
+
+<script>
+var PRE=["الحضور","تاريخ الميلاد","الفوج / القسم","الهاتف","التوقيع","ملاحظات"];
+var ATT="الحضور";
+var S={title:"",date:"",rows:30,extra:[],data:[]};
+function load(){try{var s=localStorage.getItem("sijil-hudur");if(s){var o=JSON.parse(s);if(o&&o.data)S=o}}catch(e){}}
+function save(){try{localStorage.setItem("sijil-hudur",JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function fit(){while(S.data.length<S.rows)S.data.push({})}
+function renderPresets(){
+ var h=$("presets");h.innerHTML="";
+ PRE.forEach(function(p){
+  var b=document.createElement("button");b.className="chip"+(S.extra.indexOf(p)>-1?" on":"");b.textContent=p;
+  b.onclick=function(){var i=S.extra.indexOf(p);if(i>-1)S.extra.splice(i,1);else S.extra.push(p);save();renderPresets();render()};
+  h.appendChild(b)});
+ S.extra.filter(function(c){return PRE.indexOf(c)<0}).forEach(function(c){
+  var b=document.createElement("button");b.className="chip on";b.textContent=c+" ✕";
+  b.onclick=function(){S.extra.splice(S.extra.indexOf(c),1);save();renderPresets();render()};
+  h.appendChild(b)});
+}
+function render(){
+ fit();
+ var t=$("tb"),h="<thead><tr><th>الرقم</th><th>الاسم</th><th>اللقب</th>";
+ S.extra.forEach(function(c){h+="<th>"+esc(c)+"</th>"});
+ h+="<th class='noprint'></th></tr></thead><tbody>";
+ for(var r=0;r<S.rows;r++){
+  var d=S.data[r];
+  h+="<tr><td class='n'>"+(r+1)+"</td>";
+  ["n","l"].forEach(function(k){h+="<td><input data-r='"+r+"' data-k='"+k+"' value=\""+esc(d[k]||"")+"\"></td>"});
+  S.extra.forEach(function(c){
+   if(c===ATT)h+="<td><button class='att' data-r='"+r+"' data-k='"+esc(c)+"'>"+(d[c]||"·")+"</button></td>";
+   else h+="<td><input data-r='"+r+"' data-k=\""+esc(c)+"\" value=\""+esc(d[c]||"")+"\"></td>"});
+  h+="<td class='noprint'><button class='x' data-del='"+r+"'>✕</button></td></tr>";
+ }
+ t.innerHTML=h+"</tbody>";
+ $("pt").textContent=S.title;$("pd").textContent=S.date;
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
+$("tb").addEventListener("input",function(e){var i=e.target;if(i.dataset&&i.dataset.k!==undefined&&i.tagName==="INPUT"){S.data[i.dataset.r][i.dataset.k]=i.value;save()}});
+$("tb").addEventListener("click",function(e){
+ var b=e.target;
+ if(b.classList.contains("att")){var r=b.dataset.r,k=b.dataset.k,v=S.data[r][k]||"";v=v===""?"✓":(v==="✓"?"✗":"");S.data[r][k]=v;b.textContent=v||"·";save()}
+ else if(b.dataset.del!==undefined){S.data.splice(+b.dataset.del,1);S.rows=Math.max(1,S.rows-1);$("cnt").value=S.rows;save();render()}
+});
+$("ttl").oninput=function(){S.title=this.value;$("pt").textContent=S.title;save()};
+$("dt").onchange=function(){S.date=this.value;$("pd").textContent=S.date;save()};
+$("cnt").onchange=function(){var n=Math.min(200,Math.max(1,+this.value||1));S.rows=n;this.value=n;S.data.length=Math.max(S.data.length,n);save();render()};
+$("addc").onclick=function(){var v=$("cn").value.trim();if(v&&S.extra.indexOf(v)<0){S.extra.push(v);$("cn").value="";save();renderPresets();render()}};
+$("addr").onclick=function(){S.rows++;$("cnt").value=S.rows;save();render()};
+$("clr").onclick=function(){if(confirm("مسح كل البيانات المدخلة؟")){S.data=[];save();render()}};
+$("prt").onclick=function(){window.print()};
+function today(){var d=new Date(),p=function(n){return(n<10?"0":"")+n};return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
+function setToday(){S.date=today();$("dt").value=S.date;$("pd").textContent=S.date;save()}
+$("td").onclick=setToday;
+$("sv").onclick=function(){var m=$("msg");try{localStorage.setItem("sijil-hudur",JSON.stringify(S));var d=new Date();m.textContent="تم الحفظ ✓ "+d.toLocaleTimeString("ar",{hour:"2-digit",minute:"2-digit"})}catch(e){m.textContent="تعذّر الحفظ في هذا المتصفح"}};
+load();if(!S.date)S.date=today();$("ttl").value=S.title;$("dt").value=S.date;$("cnt").value=S.rows;renderPresets();render();
+</script>
+</body>
+</html>
